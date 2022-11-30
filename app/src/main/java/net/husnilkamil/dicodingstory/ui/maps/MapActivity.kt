@@ -75,10 +75,6 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                     val listStory = getStoryResponse.listStory
                     listStory?.forEach { storyItem ->
                         val latLng = LatLng(storyItem?.lat!!, storyItem?.lon!!)
-                        Log.d("MAP_DBG", storyItem.lat.toString());
-                        Log.d("MAP_DBG", storyItem.lon.toString());
-                        Log.d("MAP_DBG", latLng.toString());
-                        Log.d("MAP_DBG", storyItem.toString());
                         mMap.addMarker(
                             MarkerOptions()
                                 .position(latLng)
@@ -90,7 +86,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                     mMap.animateCamera(
                         CameraUpdateFactory.newLatLngBounds(
                             bounds,
-                            30
+                            100
                         )
                     )
                 }

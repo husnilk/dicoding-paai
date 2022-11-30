@@ -3,15 +3,14 @@ package net.husnilkamil.dicodingstory.ui.add
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
-import net.husnilkamil.dicodingstory.R
 import net.husnilkamil.dicodingstory.data.request.StoryRequest
 import net.husnilkamil.dicodingstory.databinding.ActivityAddStoryBinding
 import net.husnilkamil.dicodingstory.ui.ViewModelFactory
@@ -19,11 +18,7 @@ import net.husnilkamil.dicodingstory.ui.main.MainActivity
 import net.husnilkamil.dicodingstory.utils.createCustomTempFile
 import net.husnilkamil.dicodingstory.utils.getToken
 import net.husnilkamil.dicodingstory.utils.uriToFile
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
+import net.husnilkamil.dicodingstory.data.Result
 import java.io.File
 import java.io.IOException
 
@@ -37,7 +32,7 @@ class AddStoryActivity : AppCompatActivity() {
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
                 val selectedImage = result.data!!.data
-                binding!!.ivPhoto.setImageURI(selectedImage)
+                binding.ivPhoto.setImageURI(selectedImage)
                 try {
                     val myFile = selectedImage?.let { uriToFile(it, this@AddStoryActivity) }
                     uploadFile = myFile
@@ -50,7 +45,7 @@ class AddStoryActivity : AppCompatActivity() {
     var launcherCamera =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
-                val myFile = File(currentPhotoPath)
+                val myFile = File(currentPhotoPath!!)
                 uploadFile = myFile
                 val imageBitmap = BitmapFactory.decodeFile(myFile.path)
                 binding.ivPhoto.setImageBitmap(imageBitmap)
@@ -97,27 +92,28 @@ class AddStoryActivity : AppCompatActivity() {
     private fun uploadStory() {
 
         if (uploadFile != null) {
-            val description = binding!!.edAddDescription.text.toString()
-
-            val desc = description.toRequestBody("text/plain".toMediaType())
-            val img = uploadFile!!.asRequestBody("image/jpeg".toMediaTypeOrNull())
-            val imageMultiPart: MultipartBody.Part =
-                MultipartBody.Part.createFormData("photo", uploadFile!!.name, img)
-
-            val storyRequest = StoryRequest(getToken(this@AddStoryActivity), desc, imageMultiPart)
+            val description = binding.edAddDescription.text.toString()
 
             binding.progressUpload.visibility = View.VISIBLE
-            addStoryViewModel.uploadStory(storyRequest).observe(this) {
-                binding.progressUpload.visibility = View.GONE
-                if(it.error == true){
-                    Toast.makeText(this, "Oops terjadi kesalahan", Toast.LENGTH_SHORT).show()
-                }else{
-                    Toast.makeText(this, "Berhasil tambah story", Toast.LENGTH_SHORT).show()
-                    val homeIntent = Intent(this@AddStoryActivity, MainActivity::class.java)
-                    startActivity(homeIntent)
+            val storyRequest = StoryRequest(getToken(this@AddStoryActivity), description, uploadFile)
+            addStoryViewModel.uploadStory(storyRequest).observe(this){ result ->
+                if (result != null) {
+                    when (result) {
+                        is Result.Loading -> {
+                            binding.progressUpload.visibility = View.VISIBLE
+                        }
+                        is Result.Success -> {
+                            binding.progressUpload.visibility = View.GONE
+                            Toast.makeText(this, "Berhasil tambah story", Toast.LENGTH_SHORT).show()
+                            val homeIntent = Intent(this@AddStoryActivity, MainActivity::class.java)
+                            startActivity(homeIntent)
+                        }
+                        is Result.Error -> {
+                            binding.progressUpload.visibility = View.GONE
+                        }
+                    }
                 }
             }
-
         } else {
             Toast.makeText(
                 this@AddStoryActivity,

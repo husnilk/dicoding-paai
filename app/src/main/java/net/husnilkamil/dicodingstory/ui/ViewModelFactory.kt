@@ -3,6 +3,8 @@ package net.husnilkamil.dicodingstory.ui
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import net.husnilkamil.dicodingstory.ui.add.AddStoryActivity
+import net.husnilkamil.dicodingstory.ui.add.AddStoryViewModel
 import net.husnilkamil.dicodingstory.ui.main.MainViewModel
 import net.husnilkamil.dicodingstory.utils.Injection
 
@@ -11,6 +13,10 @@ class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory
         if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return MainViewModel(Injection.provideRepository(context)) as T
+        }
+        if (modelClass.isAssignableFrom(AddStoryViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return AddStoryViewModel(Injection.provideRepository(context)) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }

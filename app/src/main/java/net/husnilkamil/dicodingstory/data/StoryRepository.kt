@@ -1,45 +1,42 @@
 package net.husnilkamil.dicodingstory.data
 
-import android.util.Log
 import androidx.lifecycle.LiveData
-import androidx.lifecycle.MediatorLiveData
+import androidx.lifecycle.liveData
 import androidx.paging.*
 import net.husnilkamil.dicodingstory.data.database.StoryDatabase
 import net.husnilkamil.dicodingstory.data.entity.Story
 import net.husnilkamil.dicodingstory.data.network.ApiService
 import net.husnilkamil.dicodingstory.data.request.StoryRequest
 import net.husnilkamil.dicodingstory.data.response.InsertResponse
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+
 
 class StoryRepository(private val token: String, private val database: StoryDatabase, private val apiService: ApiService) {
 
-    private val resultAddStory = MediatorLiveData<InsertResponse>()
-    fun insert(storyRequest: StoryRequest): LiveData<InsertResponse> {
+    fun insert(storyRequest: StoryRequest): LiveData<Result<InsertResponse>> = liveData{
+
+        emit(Result.Loading)
+
+        val desc = storyRequest.description.toRequestBody("text/plain".toMediaType())
+        val img = storyRequest.file!!.asRequestBody("image/jpeg".toMediaTypeOrNull())
+        val imageMultiPart: MultipartBody.Part =
+            MultipartBody.Part.createFormData("photo", storyRequest.file.name, img)
+
         val response = apiService.addStories(
             storyRequest.token,
-            storyRequest.file,
-            storyRequest.description
+            imageMultiPart,
+            desc
         )
-        response.enqueue(object : Callback<InsertResponse?> {
 
-            override fun onResponse(call: Call<InsertResponse?>, response: Response<InsertResponse?>) {
-                val objectResponse: InsertResponse? = response.body()
-                if (objectResponse != null && !objectResponse.error!!) {
-                    if (!objectResponse.error) {
-                        resultAddStory.value = objectResponse!!
-                    }
-                }else{
-                    resultAddStory.value = InsertResponse(true, "Oops")
-                }
-            }
-
-            override fun onFailure(call: Call<InsertResponse?>, t: Throwable) {
-                resultAddStory.value = InsertResponse(true, t.message.toString());
-            }
-        })
-        return resultAddStory
+        try {
+            emit(Result.Success(response))
+        }catch (t: Throwable){
+            emit(Result.Error(t.message.toString()))
+        }
     }
 
     //Paging

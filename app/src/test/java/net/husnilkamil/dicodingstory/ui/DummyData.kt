@@ -1,6 +1,7 @@
-package net.husnilkamil.dicodingstory.ui.main
+package net.husnilkamil.dicodingstory.ui
 
 import net.husnilkamil.dicodingstory.data.entity.Story
+import net.husnilkamil.dicodingstory.data.response.InsertResponse
 
 object DummyData {
 
@@ -19,5 +20,9 @@ object DummyData {
             storyList.add(story)
         }
         return storyList
+    }
+
+    fun generateDummyInsertResponse(): InsertResponse {
+        return InsertResponse(false, "Add story successful")
     }
 }

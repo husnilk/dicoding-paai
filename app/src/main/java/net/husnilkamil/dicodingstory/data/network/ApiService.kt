@@ -34,11 +34,11 @@ interface ApiService {
 
     @Multipart
     @POST("/v1/stories")
-    fun addStories(
+    suspend fun addStories(
         @Header("Authorization") token: String,
         @Part file: MultipartBody.Part?,
         @Part("description") description: RequestBody?
-    ): Call<InsertResponse>
+    ): InsertResponse
 
 
     //Paging
